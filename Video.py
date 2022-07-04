@@ -4,14 +4,12 @@ import cv2
 from PIL import Image
 
 
-def main():
-    path = 'examples/collage_batman'
+# создание видео из готовых кадров
+def making_video(path: str):
     lst = os.listdir(path)
     lst = sorted(lst, key=lambda x: int(x[0:-4]))
-    listframe = [path + '/' + name for name in lst]
     frames = []
-    print(lst)
-    for fr in listframe:
+    for fr in [path + '/' + name for name in lst]:
         image = cv2.imread(fr)
         image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         frames.append(image)
@@ -21,7 +19,7 @@ def main():
     # old_name = args.video.split('/')[-1]  # Первоначальное название видео
     video_length = 49
     comp_frames = [np.array(f).astype(np.uint8) for f in frames]
-    #save_name = old_name.replace('.mp4', res_name) if args.use_mp4 else old_name + res_name
+    # save_name = old_name.replace('.mp4', res_name) if args.use_mp4 else old_name + res_name
     if not os.path.exists(res_dir):
         os.makedirs(res_dir)
     save_path = os.path.join(res_dir, 'anime.mp4')
@@ -31,4 +29,3 @@ def main():
         writer.write(cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
     writer.release()
     print(f'Finish test! The result video is saved in: {save_path}.')
-
