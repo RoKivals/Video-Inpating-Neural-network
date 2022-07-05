@@ -1,135 +1,80 @@
-import os
-import cv2
-import numpy as np
-from PIL import Image
-import time
-start_time = time.time()
+import sys  # sys нужен для передачи argv в QApplication
+import os  # Отсюда нам понадобятся методы для отображения содержимого директорий
 
-def cropwithoverlap_imgs(path_in, path_out, n_w, n_h, overlap):
-    if path_in[-1] != "/":
-        path_in += "/"
-    if path_out[-1] != "/":
-        path_out += "/"
+import start
+from PyQt5 import QtWidgets
 
-    filenames = os.listdir(path_in)
-
-    if not os.path.exists(path_out):
-        os.makedirs(path_out)
-
-    w = 1920 // n_w
-    h = 1080 // n_h
-
-    count = 1
-    for name in filenames:
-        img = cv2.imread(path_in + name)
-        count = 1
-        for i in range(n_h):
-            y = i * h
-            for j in range(n_w):
-                x = j * w
-                if count == 1:
-                    crop_img = img[y:y + h + overlap, x:x + w + overlap]
-                elif count == 2:
-                    crop_img = img[y:y + h + overlap, x - overlap:x + w]
-                elif count == 3:
-                    crop_img = img[y - overlap:y + h, x:x + w + overlap]
-                elif count == 4:
-                    crop_img = img[y - overlap:y + h, x - overlap:x + w]
-                if not os.path.exists(path_out + str(count)):
-                    os.makedirs(path_out + str(count))
-                cv2.imwrite(path_out + str(count) + "/" + name, crop_img)
-                count += 1
+import design  # Это наш конвертированный файл дизайна
 
 
-cropwithoverlap_imgs("examples/batman", "examples/v", 2, 2, 40)
-cropwithoverlap_imgs("examples/batman_mask", "examples/v_mask", 2, 2, 40)
+class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
+    def __init__(self):
+        # Это здесь нужно для доступа к переменным, методам
+        # и т.д. в файле design.py
+        super().__init__()
+        self.setupUi(self)  # Это нужно для инициализации нашего дизайна
+        self.pushButton_start.clicked.connect(self.func_start)
+        self.pushButton_fileinput.clicked.connect(self.func_fileinput)
+        self.pushButton_fileoutput.clicked.connect(self.func_fileoutput)
+        self.pushButton_maskinput.clicked.connect(self.func_maskinput)
+
+    def func_fileinput(self):
+        self.lineEdit_fileinput.clear()  # На случай, если в списке уже есть элементы
+        directory_fileinput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        # открыть диалог выбора директории и установить значение переменной
+        # равной пути к выбранной директории
+
+        if directory_fileinput:  # не продолжать выполнение, если пользователь не выбрал директорию
+            print(directory_fileinput)
+            self.lineEdit_fileinput.setText(directory_fileinput)
+
+    def func_fileoutput(self):
+        self.lineEdit_fileoutput.clear()  # На случай, если в списке уже есть элементы
+        directory_fileoutput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        # открыть диалог выбора директории и установить значение переменной
+        # равной пути к выбранной директории
+
+        if directory_fileoutput:  # не продолжать выполнение, если пользователь не выбрал директорию
+            self.lineEdit_fileoutput.setText(directory_fileoutput)
+
+    def func_maskinput(self):
+        self.lineEdit_maskinput.clear()  # На случай, если в списке уже есть элементы
+        directory_maskinput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        # открыть диалог выбора директории и установить значение переменной
+        # равной пути к выбранной директории
+
+        if directory_maskinput:  # не продолжать выполнение, если пользователь не выбрал директорию
+            self.lineEdit_maskinput.setText(directory_maskinput)
+
+    def func_start(self):
+        if self.lineEdit_fileinput.text() == "":
+            text = "Error: заполните FILEINPUT"
+            self.error(text)
+        elif self.lineEdit_fileoutput.text() == "":
+            text = "Error: заполните FILEOUTPUT"
+            self.error(text)
+        elif self.lineEdit_maskinput.text() == "":
+            text = "Error: заполните MASKINPUT"
+            self.error(text)
+        else:
+            try:
+                self.error()
+                start.cycle(self.lineEdit_fileinput.text(), self.lineEdit_fileoutput.text(), self.lineEdit_maskinput.text(), self.spinBox_step.text(), self.spinBox_neighbor.text())
+                self.error("Красава ебать у тебя получилось")
+            except BaseException as er:
+                text = "Error"
+                self.error(text)
+
+    def error(self, text):
+        self.label_error.setText(text)
 
 
-os.system('"C:/практика Тимур/pythonProject/venv/Scripts/python.exe" test1.py -n 1 --step 49 --neighbor_stride 1 --model e2fgvi_hq --video ./examples/v/1 --mask ./examples/v_mask/1  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
-os.system('"C:/практика Тимур/pythonProject/venv/Scripts/python.exe" test1.py -n 2 --step 49 --neighbor_stride 1 --model e2fgvi_hq --video ./examples/v/2 --mask ./examples/v_mask/2  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
-os.system('"C:/практика Тимур/pythonProject/venv/Scripts/python.exe" test1.py -n 3 --step 49 --neighbor_stride 1 --model e2fgvi_hq --video ./examples/v/3 --mask ./examples/v_mask/3  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
-os.system('"C:/практика Тимур/pythonProject/venv/Scripts/python.exe" test1.py -n 4 --step 49 --neighbor_stride 1 --model e2fgvi_hq --video ./examples/v/4 --mask ./examples/v_mask/4  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
+def main():
+    app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
+    window = ExampleApp()  # Создаём объект класса ExampleApp
+    window.show()  # Показываем окно
+    app.exec_()  # и запускаем приложение
 
 
-def newcrop():
-    path = "examples/result"
-    filenames = os.listdir("examples/result/1")
-    for name in filenames:
-        img1 = cv2.imread("examples/result/1/" + name)
-        img2 = cv2.imread("examples/result/2/" + name)
-        img3 = cv2.imread("examples/result/3/" + name)
-        img4 = cv2.imread("examples/result/4/" + name)
-
-        crop_img1 = img1[0:540, 0:960]
-        crop_img2 = img2[0:540, 40:1000]
-        crop_img3 = img3[40:580, 0:960]
-        crop_img4 = img4[40:580, 40:1000]
-
-        cv2.imwrite("examples/result/1/" + name, crop_img1)
-        cv2.imwrite("examples/result/2/" + name, crop_img2)
-        cv2.imwrite("examples/result/3/" + name, crop_img3)
-        cv2.imwrite("examples/result/4/" + name, crop_img4)
-
-
-video = "examples/v"
-mask = "examples/v_mask"
-
-newcrop()
-
-
-def col():
-
-    filename_frame = os.listdir("./examples/result/1")
-    if not os.path.exists("./examples/collage"):
-        os.makedirs("./examples/collage")
-    for name in filename_frame:
-        img1 = cv2.imread("./examples/result/1/" + name)
-        img2 = cv2.imread("./examples/result/2/" + name)
-        img3 = cv2.imread("./examples/result/3/" + name)
-        img4 = cv2.imread("./examples/result/4/" + name)
-
-
-
-        Horizontal1=np.hstack([img1,img2])
-        Horizontal2=np.hstack([img3,img4])
-        Vertical_attachment=np.vstack([Horizontal1,Horizontal2])
-
-        cv2.imwrite("./examples/collage/" + name, Vertical_attachment)
-
-
-col()
-
-
-def vid():
-    path = 'examples/collage'
-    lst = os.listdir(path)
-    lst = sorted(lst)
-    listframe = [path + '/' + name for name in lst]
-    frames = []
-    print(lst)
-    for fr in listframe:
-        image = cv2.imread(fr)
-        image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        frames.append(image)
-    print('Saving videos...')
-    res_dir = 'results'  # Название папки для сохранения
-    res_name = '_results.mp4'  # Название готового файла
-    # old_name = args.video.split('/')[-1]  # Первоначальное название видео
-    video_length = 49
-    comp_frames = [np.array(f).astype(np.uint8) for f in frames]
-    #save_name = old_name.replace('.mp4', res_name) if args.use_mp4 else old_name + res_name
-    if not os.path.exists(res_dir):
-        os.makedirs(res_dir)
-    save_path = os.path.join(res_dir, 'anime.mp4')
-    writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*"mp4v"), 24, (1920, 1080))
-    for f in range(video_length):
-        comp = comp_frames[f].astype(np.uint8)
-        writer.write(cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
-    writer.release()
-    print(f'Finish test! The result video is saved in: {save_path}.')
-
-
-vid()
-
-
-print("--- %s seconds ---" % (time.time() - start_time))
+if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
+    main()  # то запускаем функцию main()

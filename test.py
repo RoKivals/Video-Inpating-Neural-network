@@ -9,16 +9,15 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import torch
+
 from core.utils import to_tensors
 
-parser = argparse.ArgumentParser(description="E2FGVI")  # Название парсера аргументов
-parser.add_argument("-v", "--video", type=str, required=True)  # Путь до видео
+parser = argparse.ArgumentParser(description="E2FGVI")
+parser.add_argument("-v", "--video", type=str, required=True)
 parser.add_argument("-c", "--ckpt", type=str, required=True)
-parser.add_argument("-m", "--mask", type=str, required=True)  # Путь до масок динамич объекта
-
-# TODO: Убрать нахуй модель!
-parser.add_argument("--model", type=str, choices=['e2fgvi', 'e2fgvi_hq'])  # Тип используемой нейронной сети
-
+parser.add_argument("-m", "--mask", type=str, required=True)
+parser.add_argument("-n", "--number", type=str, required=True)
+parser.add_argument("--model", type=str, choices=['e2fgvi', 'e2fgvi_hq'])
 parser.add_argument("--step", type=int, default=10)
 parser.add_argument("--num_ref", type=int, default=-1)
 parser.add_argument("--neighbor_stride", type=int, default=5)
@@ -37,23 +36,16 @@ neighbor_stride = args.neighbor_stride
 default_fps = args.savefps
 
 
-# ToDo: Изменить с учётом Video.py
-# Функция для склеивания полученных кадров в одно большое видео
-def saving_video(video_length: int, comp_frames: list, size: int):
-    print('Gluing together the frames... Wait')
-    res_dir = 'results'  # Название папки для сохранения
-    res_name = '_results.mp4'  # Название готового файла
-    old_name = args.video.split('/')[-1]  # Первоначальное название видео
-    save_name = old_name.replace('.mp4', res_name) if args.use_mp4 else old_name + res_name
+def saving_frames(comp_frames, namedir):
+    if namedir[-1] != "/":
+        namedir += "/"
+    res_dir = "examples/result/" + namedir
     if not os.path.exists(res_dir):
         os.makedirs(res_dir)
-    save_path = os.path.join(res_dir, save_name)
-    writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*"mp4v"), default_fps, size)
-    for f in range(video_length):
-        comp = comp_frames[f].astype(np.uint8)
-        writer.write(cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
-    writer.release()
-    print(f'Finish test! The result video is saved in: {save_path}.')
+    filenames = os.listdir(args.video)
+    for i in range(len(comp_frames)):
+        comp = comp_frames[i]
+        cv2.imwrite(res_dir + filenames[i], cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
 
 
 # sample reference frames from the whole video
@@ -76,25 +68,27 @@ def get_ref_index(f, neighbor_ids, length):
 
 # read frame-wise masks
 def read_mask(mpath, size):
-    masks = []  # Массив для хранения масок
-    mask_names = os.listdir(mpath)  # Имена всех кадров с масками
-    mask_names.sort()
-    for t_mask in mask_names:
-        m = Image.open(os.path.join(mpath, t_mask))
+    masks = []
+    mnames = os.listdir(mpath)
+    mnames.sort()
+    for mp in mnames:
+        m = Image.open(os.path.join(mpath, mp))
         m = m.resize(size, Image.NEAREST)
         m = np.array(m.convert('L'))
         m = np.array(m > 0).astype(np.uint8)
-        m = cv2.dilate(m, cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)), iterations=4)
+        m = cv2.dilate(m,
+                       cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)),
+                       iterations=4)
         masks.append(Image.fromarray(m * 255))
     return masks
 
 
 #  read frames from video
 def read_frame_from_videos(args):
-    video_name = args.video
+    vname = args.video
     frames = []
     if args.use_mp4:
-        vidcap = cv2.VideoCapture(video_name)
+        vidcap = cv2.VideoCapture(vname)
         success, image = vidcap.read()
         count = 0
         while success:
@@ -103,9 +97,9 @@ def read_frame_from_videos(args):
             success, image = vidcap.read()
             count += 1
     else:
-        lst = os.listdir(video_name)
+        lst = os.listdir(vname)
         lst.sort()
-        fr_lst = [video_name + '/' + name for name in lst]
+        fr_lst = [vname + '/' + name for name in lst]
         for fr in fr_lst:
             image = cv2.imread(fr)
             image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
@@ -142,7 +136,9 @@ def main_worker():
 
     # prepare datset
     args.use_mp4 = True if args.video.endswith('.mp4') else False
-    print(f'Loading videos and masks from: {args.video} | INPUT MP4 format: {args.use_mp4}')
+    print(
+        f'Loading videos and masks from: {args.video} | INPUT MP4 format: {args.use_mp4}'
+    )
     frames = read_frame_from_videos(args)
     frames, size = resize_frames(frames, size)
     h, w = size[1], size[0]
@@ -161,7 +157,10 @@ def main_worker():
     # completing holes by e2fgvi
     print(f'Start test...')
     for f in tqdm(range(0, video_length, neighbor_stride)):
-        neighbor_ids = [i for i in range(max(0, f - neighbor_stride), min(video_length, f + neighbor_stride + 1))]
+        neighbor_ids = [
+            i for i in range(max(0, f - neighbor_stride),
+                             min(video_length, f + neighbor_stride + 1))
+        ]
         ref_ids = get_ref_index(f, neighbor_ids, video_length)
         selected_imgs = imgs[:1, neighbor_ids + ref_ids, :, :, :]
         selected_masks = masks[:1, neighbor_ids + ref_ids, :, :, :]
@@ -171,42 +170,28 @@ def main_worker():
             mod_size_w = 108
             h_pad = (mod_size_h - h % mod_size_h) % mod_size_h
             w_pad = (mod_size_w - w % mod_size_w) % mod_size_w
-            masked_imgs = torch.cat([masked_imgs, torch.flip(masked_imgs, [3])], 3)[:, :, :, :h + h_pad, :]
-            masked_imgs = torch.cat([masked_imgs, torch.flip(masked_imgs, [4])], 4)[:, :, :, :, :w + w_pad]
+            masked_imgs = torch.cat(
+                [masked_imgs, torch.flip(masked_imgs, [3])],
+                3)[:, :, :, :h + h_pad, :]
+            masked_imgs = torch.cat(
+                [masked_imgs, torch.flip(masked_imgs, [4])],
+                4)[:, :, :, :, :w + w_pad]
             pred_imgs, _ = model(masked_imgs, len(neighbor_ids))
             pred_imgs = pred_imgs[:, :, :h, :w]
             pred_imgs = (pred_imgs + 1) / 2
             pred_imgs = pred_imgs.cpu().permute(0, 2, 3, 1).numpy() * 255
             for i in range(len(neighbor_ids)):
                 idx = neighbor_ids[i]
-                img = np.array(pred_imgs[i]).astype(np.uint8) * binary_masks[idx] + frames[idx] * (1 - binary_masks[idx])
+                img = np.array(pred_imgs[i]).astype(
+                    np.uint8) * binary_masks[idx] + frames[idx] * (
+                        1 - binary_masks[idx])
                 if comp_frames[idx] is None:
                     comp_frames[idx] = img
                 else:
                     comp_frames[idx] = comp_frames[idx].astype(
                         np.float32) * 0.5 + img.astype(np.float32) * 0.5
 
-    saving_video(video_length, comp_frames, size)
-
-    # show results
-    print('Let us enjoy the result!')
-    fig = plt.figure('Let us enjoy the result')
-    ax1 = fig.add_subplot(1, 2, 1)
-    ax1.axis('off')
-    ax1.set_title('Original Video')
-    ax2 = fig.add_subplot(1, 2, 2)
-    ax2.axis('off')
-    ax2.set_title('Our Result')
-    imdata1 = ax1.imshow(frames[0])
-    imdata2 = ax2.imshow(comp_frames[0].astype(np.uint8))
-
-    def update(idx):
-        imdata1.set_data(frames[idx])
-        imdata2.set_data(comp_frames[idx].astype(np.uint8))
-
-    fig.tight_layout()
-    anim = animation.FuncAnimation(fig, update, frames=len(frames), interval=50)
-    plt.show()
+    saving_frames(comp_frames, args.number)
 
 
 if __name__ == '__main__':
