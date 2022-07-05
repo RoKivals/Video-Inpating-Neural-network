@@ -116,7 +116,7 @@ def cycle(fileinput, fileoutput, maskinput, step, neighbor, height, width):
     mask = "examples/v_mask"
 
     if not os.path.exists(video):
-        os.makedirs(mask)
+        os.makedirs(video)
 
     if not os.path.exists(video):
         os.makedirs(mask)
