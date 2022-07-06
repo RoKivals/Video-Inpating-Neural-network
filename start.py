@@ -6,8 +6,6 @@ import time
 import test
 
 
-PATH_TO_PYTHON = "C:/Users/USER/pythonProject/Project/new/Scripts/python.exe"
-
 def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, overlap: int, width: int, height: int):
     if path_in[-1] != "/":
         path_in += "/"
@@ -86,61 +84,52 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
 
         cv2.imwrite("./examples/collage/" + name, Vertical_attachment)
 
+
 # создание видео из готовых кадров
-def making_video(path: str, len: int, fps: int, size: tuple):
+def MakingVideo(path: str, path_out: str, fps: int, size: tuple, save_name: str):
     lst = os.listdir(path)  # Путь, где лежат готовые фреймы
     lst = sorted(lst, key=lambda x: int(x[0:-4]))  # Собираем названия всех фреймов по порядку
     # TODO: Можно попробовать выставить эти кадры по времени создания, а не по имени (в теории это более надёжно)
     frames = []
-
     for fr in [path + '/' + name for name in lst]:
         image = cv2.imread(fr)
         image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         frames.append(image)
     print('Saving videos...')
-
-    res_dir = 'results'  # Название папки для сохранения
-    res_name = '_results.mp4'  # Название готового файла
-    if not os.path.exists(res_dir):
-        os.makedirs(res_dir)
-
-    # old_name = args.video.split('/')[-1]  # Первоначальное название видео
     comp_frames = [np.array(f).astype(np.uint8) for f in frames]
-
+    save_name = save_name + '.mp4'
     # TODO: Вот тут надо определиться с парсером аргументов
-    save_name = 'anime.mp4'  # old_name.replace('.mp4', res_name) if args.use_mp4 else old_name + res_name
-    final_path = os.path.join(res_dir, save_name)
+    final_path = os.path.join(path_out, save_name)
     writer = cv2.VideoWriter(final_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, size)
-    for f in range(len):
+    for f in range(len(comp_frames)):
         comp = comp_frames[f].astype(np.uint8)
         writer.write(cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
     writer.release()
-    print(f'Finish test! The result video is saved in: {save_path}.')
+    print(f'Finish test! The result video is saved in: {final_path}.')
 
 
-def cycle(fileinput, fileoutput, maskinput, step, neighbor, height, width):
+def cycle(file_in: str, mask_in: str, video_out: str, step, neighbor, height, width, tmp_vpath: str, tmp_mpath: str, h_cuts: int, w_cuts: int,
+          overlap: int, mp4v: bool, mp4m: bool, fps: int, fin_name: str):
     start_time = time.time()
-
-    video = "examples/v"
-    mask = "examples/v_mask"
-
-    if not os.path.exists(video):
-        os.makedirs(video)
-
-    if not os.path.exists(video):
-        os.makedirs(mask)
-
-    cropwithoverlap_imgs(fileinput, video, 2, 2, 40, height, width)
-    cropwithoverlap_imgs(maskinput, mask, 2, 2, 40, height, width)
-
-    test.main_worker(video, mask, "release_model/E2FGVI-HQ-CVPR22.pth", 4, "e2fgvi_hq", neighbor, step, 1000, 580)
-
-    newcrop()
-
-    col()
-
-    vid(fileoutput)
-
-
+    if not os.path.exists(tmp_vpath):
+        os.makedirs(tmp_vpath)
+    if not os.path.exists(tmp_mpath):
+        os.makedirs(tmp_mpath)
+    if mp4v:
+        os.makedirs('./Temp/Frames')
+        test.ReadFramesFromVideo(mp4v, file_in, './Temp/Frames')
+        file_in = './Temp/Frames'
+    if mp4m:
+        os.makedirs('./Temp/Mask')
+        test.ReadFramesFromVideo(mp4m, mask_in, './Temp/Mask')
+        mask_in = './Temp/Mask'
+    # Режем видео
+    CropImages(file_in, tmp_vpath, w_cuts, h_cuts, overlap, width, height)
+    # Режем маски
+    CropImages(mask_in, tmp_mpath, w_cuts, h_cuts, overlap, width, height)
+    # Запускаем нейронку
+    test.main_worker(tmp_vpath, tmp_mpath, "release_model/E2FGVI-HQ-CVPR22.pth", w_cuts * h_cuts, "e2fgvi_hq", neighbor, step, 1000, 580)
+    GluingImages("./Temp/result", "./Temp/ResultFrame", w_cuts, h_cuts)
+    MakingVideo("./Temp/ResultFrame", video_out, fps, (width, height), fin_name)
     print("--- %s seconds ---" % (time.time() - start_time))
     return 0
