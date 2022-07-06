@@ -58,9 +58,9 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.error(text)
         else:
             try:
-                self.error()
-                start.cycle(self.lineEdit_fileinput.text(), self.lineEdit_fileoutput.text(), self.lineEdit_maskinput.text(), self.spinBox_step.text(),
-                            self.spinBox_neighbor.text())
+                self.error("")
+                # TODO: в gui замутить считывание имени для результата и добавить его передачу в 63 строку
+                start.cycle(self.lineEdit_fileinput.text(), self.lineEdit_fileoutput.text(), self.lineEdit_maskinput.text(), int(self.spinBox_step.text()), int(self.spinBox_neighbor.text()), int(self.spinBox_height.text()), int(self.spinBox_width.text()))
                 self.error("Красава ебать у тебя получилось")
             except BaseException as er:
                 text = "Error"

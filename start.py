@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import time
+import test
 
 
 PATH_TO_PYTHON = "C:/Users/USER/pythonProject/Project/new/Scripts/python.exe"
@@ -12,7 +13,9 @@ def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, o
         path_in += "/"
     if path_out[-1] != "/":
         path_out += "/"
+
     filenames = os.listdir(path_in)
+
     if not os.path.exists(path_out):
         os.makedirs(path_out)
 
@@ -81,6 +84,7 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
         Vertical_attachment = np.vstack(Horizontal)
         cv2.imwrite(f"./{ex_path}/" + name, Vertical_attachment)
 
+        cv2.imwrite("./examples/collage/" + name, Vertical_attachment)
 
 # создание видео из готовых кадров
 def making_video(path: str, len: int, fps: int, size: tuple):
@@ -111,28 +115,25 @@ def making_video(path: str, len: int, fps: int, size: tuple):
         comp = comp_frames[f].astype(np.uint8)
         writer.write(cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
     writer.release()
-    print(f'Finish test! The result video is saved in: {final_path}.')
+    print(f'Finish test! The result video is saved in: {save_path}.')
 
 
-def cycle(fileinput, fileoutput, maskinput, step, neighbor):
+def cycle(fileinput, fileoutput, maskinput, step, neighbor, height, width):
     start_time = time.time()
-
-    if not os.path.exists("examples/v"):
-        os.makedirs("examples/v")
-
-    if not os.path.exists("examples/v_mask"):
-        os.makedirs("examples/v_mask")
-
-    CropImages(fileinput, "examples/v", 2, 2, 40)
-    CropImages(maskinput, "examples/v_mask", 2, 2, 40)
-
-    os.system(f'{PATH_TO_PYTHON} test1.py -n 1 --step {int(step)} --neighbor_stride {int(neighbor)} --model e2fgvi_hq --video ./examples/v/1 --mask ./examples/v_mask/1  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
-    os.system(f'{PATH_TO_PYTHON} test1.py -n 2 --step {int(step)} --neighbor_stride {int(neighbor)} --model e2fgvi_hq --video ./examples/v/2 --mask ./examples/v_mask/2  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
-    os.system(f'{PATH_TO_PYTHON} test1.py -n 3 --step {int(step)} --neighbor_stride {int(neighbor)} --model e2fgvi_hq --video ./examples/v/3 --mask ./examples/v_mask/3  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
-    os.system(f'{PATH_TO_PYTHON} test1.py -n 4 --step {int(step)} --neighbor_stride {int(neighbor)} --model e2fgvi_hq --video ./examples/v/4 --mask ./examples/v_mask/4  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
 
     video = "examples/v"
     mask = "examples/v_mask"
+
+    if not os.path.exists(video):
+        os.makedirs(video)
+
+    if not os.path.exists(video):
+        os.makedirs(mask)
+
+    cropwithoverlap_imgs(fileinput, video, 2, 2, 40, height, width)
+    cropwithoverlap_imgs(maskinput, mask, 2, 2, 40, height, width)
+
+    test.main_worker(video, mask, "release_model/E2FGVI-HQ-CVPR22.pth", 4, "e2fgvi_hq", neighbor, step, 1000, 580)
 
     newcrop()
 
