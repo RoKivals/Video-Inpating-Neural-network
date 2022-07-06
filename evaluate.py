@@ -98,7 +98,7 @@ def main_worker(args):
                 for i in range(len(neighbor_ids)):
                     idx = neighbor_ids[i]
                     img = np.array(pred_img[i]).astype(np.uint8) * binary_masks[i] \
-                        + ori_frames[idx] * (1 - binary_masks[i])
+                          + ori_frames[idx] * (1 - binary_masks[i])
                     if comp_frames[idx] is None:
                         comp_frames[idx] = img
                     else:
@@ -133,10 +133,10 @@ def main_worker(args):
         output_i3d_activations.append(comp_i3d)
 
         print(
-            f'[{index+1:3}/{len(test_loader)}] Name: {str(video_name):25} | PSNR/SSIM: {cur_psnr:.4f}/{cur_ssim:.4f}'
+            f'[{index + 1:3}/{len(test_loader)}] Name: {str(video_name):25} | PSNR/SSIM: {cur_psnr:.4f}/{cur_ssim:.4f}'
         )
         eval_summary.write(
-            f'[{index+1:3}/{len(test_loader)}] Name: {str(video_name):25} | PSNR/SSIM: {cur_psnr:.4f}/{cur_ssim:.4f}\n'
+            f'[{index + 1:3}/{len(test_loader)}] Name: {str(video_name):25} | PSNR/SSIM: {cur_psnr:.4f}/{cur_ssim:.4f}\n'
         )
 
         # saving images for evaluating warpping errors
