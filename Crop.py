@@ -9,7 +9,7 @@ height_cuts - кол-во нарезок высоты
 '''
 
 
-def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, overlap: int):
+def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, overlap: int, width: int, height: int):
     if path_in[-1] != "/":
         path_in += "/"
     if path_out[-1] != "/":
@@ -17,9 +17,10 @@ def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, o
     filenames = os.listdir(path_in)
     if not os.path.exists(path_out):
         os.makedirs(path_out)
+
     # Находим высоту и ширину для каждого разделения
-    block_width = 1920 // width_cuts
-    block_height = 1080 // height_cuts
+    block_width = width // width_cuts
+    block_height = height // height_cuts
     count = 1
     for name in filenames:
         img = cv2.imread(path_in + name)

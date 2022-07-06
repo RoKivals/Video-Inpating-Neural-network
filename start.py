@@ -7,80 +7,79 @@ import time
 
 PATH_TO_PYTHON = "C:/Users/USER/pythonProject/Project/new/Scripts/python.exe"
 
-def cropwithoverlap_imgs(path_in, path_out, n_w, n_h, overlap):
+def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, overlap: int, width: int, height: int):
     if path_in[-1] != "/":
         path_in += "/"
     if path_out[-1] != "/":
         path_out += "/"
-
     filenames = os.listdir(path_in)
-
     if not os.path.exists(path_out):
         os.makedirs(path_out)
 
-    w = 1920 // n_w
-    h = 1080 // n_h
-
+    # Находим высоту и ширину для каждого разделения
+    block_width = width // width_cuts
+    block_height = height // height_cuts
     count = 1
     for name in filenames:
         img = cv2.imread(path_in + name)
-        count = 1
-        for i in range(n_h):
-            y = i * h
-            for j in range(n_w):
-                x = j * w
-                if count == 1:
-                    crop_img = img[y:y + h + overlap, x:x + w + overlap]
-                elif count == 2:
-                    crop_img = img[y:y + h + overlap, x - overlap:x + w]
-                elif count == 3:
-                    crop_img = img[y - overlap:y + h, x:x + w + overlap]
-                elif count == 4:
-                    crop_img = img[y - overlap:y + h, x - overlap:x + w]
+        count = 1  # Нумерация разделения (слева направо, сверху вниз)
+        for i in range(height_cuts):
+            curr_y = i * block_height
+            for j in range(width_cuts):
+                curr_x = j * block_width
+                # Обработка левой границы
+                if count % width_cuts == 1:
+                    # Левый верхний угол
+                    if count == 1:
+                        crop_img = img[curr_y:curr_y + block_height + overlap, curr_x:curr_x + block_width + overlap]
+                    # Левый нижний угол
+                    elif count == width_cuts * (height_cuts - 1) + 1:
+                        crop_img = img[curr_y - overlap:curr_y + block_height, curr_x:curr_x + block_width + overlap]
+                    # Сама стенка
+                    else:
+                        crop_img = img[curr_y - overlap:curr_y + block_height + overlap, curr_x:curr_x + block_width + overlap]
+                # Обработка верхней границы
+                elif count <= width_cuts:
+                    # Правый верхний угол
+                    if count == width_cuts:
+                        crop_img = img[curr_y:curr_y + block_height + overlap, curr_x - overlap:curr_x + block_width]
+                    # Сама стенка
+                    else:
+                        crop_img = img[curr_y:curr_y + block_height + overlap, curr_x - overlap:curr_x + block_width + overlap]
+                # Обработка правой границы
+                elif count % width_cuts == 0:
+                    # Правый нижний угол
+                    if count == width_cuts * height_cuts:
+                        crop_img = img[curr_y - overlap:curr_y + block_height, curr_x - overlap:curr_x + block_width]
+                    # Сама стенка
+                    else:
+                        crop_img = img[curr_y - overlap:curr_y + block_height + overlap, curr_x - overlap:curr_x + block_width]
+                # Обработка нижней границы
+                elif width_cuts * (height_cuts - 1) + 1 < count < height_cuts * width_cuts:
+                    # Сама стенка
+                    crop_img = img[curr_y - overlap:curr_y + block_height, curr_x - overlap:curr_x + block_width + overlap]
+                # Обработка внутренних блоков
+                else:
+                    crop_img = img[curr_y - overlap:curr_y + block_height + overlap, curr_x - overlap:curr_x + block_width + overlap]
                 if not os.path.exists(path_out + str(count)):
                     os.makedirs(path_out + str(count))
                 cv2.imwrite(path_out + str(count) + "/" + name, crop_img)
                 count += 1
 
 
-def newcrop():
-    path = "examples/result"
-    filenames = os.listdir("examples/result/1")
-    for name in filenames:
-        img1 = cv2.imread("examples/result/1/" + name)
-        img2 = cv2.imread("examples/result/2/" + name)
-        img3 = cv2.imread("examples/result/3/" + name)
-        img4 = cv2.imread("examples/result/4/" + name)
-
-        crop_img1 = img1[0:540, 0:960]
-        crop_img2 = img2[0:540, 40:1000]
-        crop_img3 = img3[40:580, 0:960]
-        crop_img4 = img4[40:580, 40:1000]
-
-        cv2.imwrite("examples/result/1/" + name, crop_img1)
-        cv2.imwrite("examples/result/2/" + name, crop_img2)
-        cv2.imwrite("examples/result/3/" + name, crop_img3)
-        cv2.imwrite("examples/result/4/" + name, crop_img4)
-
-
-def col():
-
-    filename_frame = os.listdir("./examples/result/1")
-    if not os.path.exists("./examples/collage"):
-        os.makedirs("./examples/collage")
+def GluingImages(path_in: str, ex_path: str, width: int, height: int):
+    if not os.path.exists(ex_path):
+        os.makedirs(ex_path)
+    img = [None] * width * height
+    Horizontal = [None] * height
+    filename_frame = os.listdir(os.path.join(path_in, 'new1'))
     for name in filename_frame:
-        img1 = cv2.imread("./examples/result/1/" + name)
-        img2 = cv2.imread("./examples/result/2/" + name)
-        img3 = cv2.imread("./examples/result/3/" + name)
-        img4 = cv2.imread("./examples/result/4/" + name)
-
-
-
-        Horizontal1=np.hstack([img1,img2])
-        Horizontal2=np.hstack([img3,img4])
-        Vertical_attachment=np.vstack([Horizontal1,Horizontal2])
-
-        cv2.imwrite("./examples/collage/" + name, Vertical_attachment)
+        for i in range(width * height):
+            img[i] = cv2.imread(f"./{path_in}/new{i + 1}/" + name)
+        for i in range(height):
+            Horizontal[i] = np.hstack(img[width * i: width * (i + 1)])
+        Vertical_attachment = np.vstack(Horizontal)
+        cv2.imwrite(f"./{ex_path}/" + name, Vertical_attachment)
 
 
 # создание видео из готовых кадров
@@ -124,8 +123,8 @@ def cycle(fileinput, fileoutput, maskinput, step, neighbor):
     if not os.path.exists("examples/v_mask"):
         os.makedirs("examples/v_mask")
 
-    cropwithoverlap_imgs(fileinput, "examples/v", 2, 2, 40)
-    cropwithoverlap_imgs(maskinput, "examples/v_mask", 2, 2, 40)
+    CropImages(fileinput, "examples/v", 2, 2, 40)
+    CropImages(maskinput, "examples/v_mask", 2, 2, 40)
 
     os.system(f'{PATH_TO_PYTHON} test1.py -n 1 --step {int(step)} --neighbor_stride {int(neighbor)} --model e2fgvi_hq --video ./examples/v/1 --mask ./examples/v_mask/1  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
     os.system(f'{PATH_TO_PYTHON} test1.py -n 2 --step {int(step)} --neighbor_stride {int(neighbor)} --model e2fgvi_hq --video ./examples/v/2 --mask ./examples/v_mask/2  --ckpt release_model/E2FGVI-HQ-CVPR22.pth --width 1000 --height 580')
