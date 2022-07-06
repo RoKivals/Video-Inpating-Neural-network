@@ -137,7 +137,6 @@ def main_worker(frames_in, mask, ckpt, number, model, neighbor_stride, ref_lengt
         model = net.InpaintGenerator().to(device)
         data = torch.load(args.ckpt, map_location=device)
         model.load_state_dict(data)
-        print(f'Loading model from: {args.ckpt}')
         model.eval()
         frames = ReadFramesFromVideo(1, args.video)
         frames, size = resize_frames(frames, size)
@@ -151,7 +150,6 @@ def main_worker(frames_in, mask, ckpt, number, model, neighbor_stride, ref_lengt
         imgs, masks = imgs.to(device), masks.to(device)
         comp_frames = [None] * video_length
         # completing holes by e2fgvi
-        print(f'Start test...')
         for f in tqdm(range(0, video_length, args.neighbor_stride)):
             neighbor_ids = [i for i in range(max(0, f - args.neighbor_stride), min(video_length, f + args.neighbor_stride + 1))]
             ref_ids = get_ref_index(f, neighbor_ids, video_length, args)

@@ -68,6 +68,14 @@ def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, o
                 count += 1
 
 
+'''
+path_in - путь до папки, в которой лежат все остальные папки с нарезанными кадрами
+ex_path - выходной путь, то есть куда будет сохранено конечное видео
+width - кол-во нарезок по вертикали
+height - кол-во нарезок по горизонтали
+'''
+
+
 def GluingImages(path_in: str, ex_path: str, width: int, height: int):
     if not os.path.exists(ex_path):
         os.makedirs(ex_path)
@@ -81,8 +89,6 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
             Horizontal[i] = np.hstack(img[width * i: width * (i + 1)])
         Vertical_attachment = np.vstack(Horizontal)
         cv2.imwrite(f"./{ex_path}/" + name, Vertical_attachment)
-
-        cv2.imwrite("./examples/collage/" + name, Vertical_attachment)
 
 
 # создание видео из готовых кадров
@@ -108,7 +114,8 @@ def MakingVideo(path: str, path_out: str, fps: int, size: tuple, save_name: str)
     print(f'Finish test! The result video is saved in: {final_path}.')
 
 
-def cycle(file_in: str, mask_in: str, video_out: str, step, neighbor, height, width, tmp_vpath: str, tmp_mpath: str, h_cuts: int, w_cuts: int,
+# Цикл пропускающий все картинки через нейронку
+def Cycle(file_in: str, mask_in: str, video_out: str, step, neighbor, height, width, tmp_vpath: str, tmp_mpath: str, h_cuts: int, w_cuts: int,
           overlap: int, mp4v: bool, mp4m: bool, fps: int, fin_name: str):
     start_time = time.time()
     if not os.path.exists(tmp_vpath):
