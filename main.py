@@ -61,9 +61,11 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 video_out = "/".join(self.lineEdit_fileoutput.text().split("/")[:-1])
                 fin_name = self.lineEdit_fileoutput.text().split("/")[-1]
                 # TODO: в gui замутить считывание имени для результата и добавить его передачу в 63 строку
-                start.Cycle(self.lineEdit_fileinput.text(), self.lineEdit_maskinput.text(), video_out,
+                args = Args()
+                args.setup(self.lineEdit_fileinput.text(), self.lineEdit_maskinput.text(), video_out,
                             int(self.spinBox_step.text()), int(self.spinBox_neighbor.text()), int(self.spinBox_height.text()),
                             int(self.spinBox_width.text()), "./Temp/V", "./Temp/V_mask", int(self.spinBox_crop_height.text()), int(self.spinBox_crop_width.text()), int(self.spinBox_crop_overlap.text()), self.radioButton_use_mp4_for_video.isChecked(), self.radioButton_use_mp4_for_mask.isChecked(), int(self.spinBox_FPS.text()), fin_name)
+                start.Cycle(args)
                 self.error("Красава ебать у тебя получилось")
             except BaseException as er:
                 text = "Error"
