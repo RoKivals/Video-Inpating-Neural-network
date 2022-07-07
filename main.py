@@ -59,6 +59,7 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             try:
                 self.error("")
                 video_out = "/".join(self.lineEdit_fileoutput.text().split("/")[:-1])
+                print(video_out)
                 fin_name = self.lineEdit_fileoutput.text().split("/")[-1]
                 # TODO: в gui замутить считывание имени для результата и добавить его передачу в 63 строку
                 args = Args()

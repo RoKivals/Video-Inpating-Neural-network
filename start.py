@@ -84,7 +84,6 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
     img = [None] * width * height
     Horizontal = [None] * height
     filename_frame = os.listdir(os.path.join(path_in, '1'))
-    print(filename_frame)
     for name in filename_frame:
         for i in range(width * height):
             img[i] = cv2.imread(f"./{path_in}/{i + 1}/" + name)
@@ -97,16 +96,15 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
 # создание видео из готовых кадров
 def MakingVideo(path: str, path_out: str, fps: int, size: tuple, save_name: str):
     lst = os.listdir(path)  # Путь, где лежат готовые фреймы
-    lst = sorted(lst, key=lambda x: int(x[0:-4]))  # Собираем названия всех фреймов по порядку
+    lst.sort()  # Собираем названия всех фреймов по порядку
     # TODO: Можно попробовать выставить эти кадры по времени создания, а не по имени (в теории это более надёжно)
     frames = []
-    for fr in [path + '/' + name for name in lst]:
-        image = cv2.imread(fr)
+    for fr in [os.path.join(path, name) for name in lst]:
+        image = cv2.imread(fr)  
         image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         frames.append(image)
     print('Saving videos...')
     comp_frames = [np.array(f).astype(np.uint8) for f in frames]
-    save_name = save_name + '.mp4'
     # TODO: Вот тут надо определиться с парсером аргументов
     final_path = os.path.join(path_out, save_name)
     writer = cv2.VideoWriter(final_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, size)
@@ -119,12 +117,10 @@ def MakingVideo(path: str, path_out: str, fps: int, size: tuple, save_name: str)
 
 def CropOverlaps(path, width_cuts: int, height_cuts: int, overlap:int, width: int, height: int):
     dirnames = os.listdir(path)
-
+    count = 1
     for dir in dirnames:
         dir_path = os.path.join(path, dir)
-        count = 1
         filenames = os.listdir(dir_path)
-        ms = list()
         block_width = width
         block_height = height
         for file in filenames:
@@ -189,17 +185,17 @@ def Cycle(args: main.Args):
         test.ReadFramesFromVideo(args.mp4m, args.mask, './Temp/Mask')
         args.mask = './Temp/Mask'
     # # Режем видео
-    # CropImages(args.video, args.tmp_vpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
-    # # Режем маски
-    # CropImages(args.mask, args.tmp_mpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
-    # # Запускаем нейронку
-    # block_width = args.width // args.w_cuts
-    # block_height = args.height // args.h_cuts
-    # block_height_with_overlap = block_height + args.overlap
-    # block_width_with_overlap = block_width + args.overlap
-    #
-    # test.main_worker(args, block_width_with_overlap, block_height_with_overlap)
-    # CropOverlaps("./Temp/result", args.w_cuts, args.h_cuts, args.overlap, block_width, block_height)
+    CropImages(args.video, args.tmp_vpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
+    # Режем маски
+    CropImages(args.mask, args.tmp_mpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
+    # Запускаем нейронку
+    block_width = args.width // args.w_cuts
+    block_height = args.height // args.h_cuts
+    block_height_with_overlap = block_height + args.overlap
+    block_width_with_overlap = block_width + args.overlap
+
+    test.main_worker(args, block_width_with_overlap, block_height_with_overlap)
+    CropOverlaps("./Temp/result", args.w_cuts, args.h_cuts, args.overlap, block_width, block_height)
     GluingImages("./Temp/result", "./Temp/ResultFrame", args.w_cuts, args.h_cuts)
     MakingVideo("./Temp/ResultFrame", args.video_out, args.fps, (args.width, args.height), args.final_name)
     print("--- %s seconds ---" % (time.time() - start_time))
