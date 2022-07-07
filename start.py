@@ -100,7 +100,7 @@ def MakingVideo(path: str, path_out: str, fps: int, size: tuple, save_name: str)
     # TODO: Можно попробовать выставить эти кадры по времени создания, а не по имени (в теории это более надёжно)
     frames = []
     for fr in [os.path.join(path, name) for name in lst]:
-        image = cv2.imread(fr)  
+        image = cv2.imread(fr)
         image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         frames.append(image)
     print('Saving videos...')
