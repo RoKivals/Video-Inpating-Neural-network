@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import torch
 from core.utils import to_tensors
-
+from main import Args
 
 
 
@@ -29,13 +29,13 @@ def saving_frames(comp_frames, namedir, args):
 def get_ref_index(f, neighbor_ids, length, args):
     ref_index = []
     if args.num_ref == -1:
-        for i in range(0, length, args.ref_length):
+        for i in range(0, length, args.step):
             if i not in neighbor_ids:
                 ref_index.append(i)
     else:
-        start_idx = max(0, f - args.ref_length * (args.num_ref // 2))
-        end_idx = min(length, f + args.ref_length * (args.num_ref // 2))
-        for i in range(start_idx, end_idx + 1, args.ref_length):
+        start_idx = max(0, f - args.step * (args.num_ref // 2))
+        end_idx = min(length, f + args.step * (args.num_ref // 2))
+        for i in range(start_idx, end_idx + 1, args.step):
             if i not in neighbor_ids:
                 if len(ref_index) > args.num_ref:
                     break
@@ -73,7 +73,7 @@ def ReadFramesFromVideo(id: int, file_in, tmp_out=" "):
         frames = []
         lst = os.listdir(file_in)
         lst.sort()
-        fr_lst = [file_in + '/' + name for name in lst]
+        fr_lst = [os.path.join(file_in, name) for name in lst]
         for fr in fr_lst:
             image = cv2.imread(fr)
             image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
@@ -95,16 +95,16 @@ def resize_frames(frames, size=None):
 '''
 
 
-def main_worker(args):
-    root_video = args.video
-    root_mask = args.mask
+def main_worker(args, width, height):
+    root_video = args.tmp_vpath
+    root_mask = args.tmp_mpath
     for iteration in range(1, args.number + 1):
-        args.video = os.path.join(root_video, str(iteration))
-        args.mask = os.path.join(root_mask, str(iteration))
+        video = os.path.join(root_video, str(iteration))
+        mask = os.path.join(root_mask, str(iteration))
         # set up models
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if args.set_size:
-            size = (args.width, args.height)
+            size = (width, height)
         else:
             size = None
         net = importlib.import_module('model.' + args.model)
@@ -112,13 +112,13 @@ def main_worker(args):
         data = torch.load(args.ckpt, map_location=device)
         model.load_state_dict(data)
         model.eval()
-        frames = ReadFramesFromVideo(1, args.video)
+        frames = ReadFramesFromVideo(1, video)
         frames, size = resize_frames(frames, size)
         h, w = size[1], size[0]
         video_length = len(frames)
         imgs = to_tensors()(frames).unsqueeze(0) * 2 - 1
         frames = [np.array(f).astype(np.uint8) for f in frames]
-        masks = read_mask(args.mask, size)
+        masks = read_mask(mask, size)
         binary_masks = [np.expand_dims((np.array(m) != 0).astype(np.uint8), 2) for m in masks]
         masks = to_tensors()(masks).unsqueeze(0)
         imgs, masks = imgs.to(device), masks.to(device)

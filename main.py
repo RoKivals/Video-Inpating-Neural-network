@@ -122,6 +122,7 @@ class Args:
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
+    app.setStyle('Breeze')
     window = ExampleApp()  # Создаём объект класса ExampleApp
     window.show()  # Показываем окно
     app.exec_()  # и запускаем приложение

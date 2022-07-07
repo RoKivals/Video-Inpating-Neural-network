@@ -5,6 +5,8 @@ from PIL import Image
 import time
 import test
 import main
+from main import Args
+
 
 def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, overlap: int, width: int, height: int):
     if path_in[-1] != "/":
@@ -82,10 +84,8 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
     img = [None] * width * height
     Horizontal = [None] * height
     filename_frame = os.listdir(os.path.join(path_in, '1'))
-    print(11)
     print(filename_frame)
     for name in filename_frame:
-        print(12)
         for i in range(width * height):
             img[i] = cv2.imread(f"./{path_in}/{i + 1}/" + name)
         for i in range(height):
@@ -124,7 +124,7 @@ def CropOverlaps(path, width_cuts: int, height_cuts: int, overlap:int, width: in
         dir_path = os.path.join(path, dir)
         count = 1
         filenames = os.listdir(dir_path)
-
+        ms = list()
         block_width = width
         block_height = height
         for file in filenames:
@@ -137,26 +137,26 @@ def CropOverlaps(path, width_cuts: int, height_cuts: int, overlap:int, width: in
                     if count % width_cuts == 1:
                         # Левый верхний угол
                         if count == 1:
-                            crop_img = img[curr_y:curr_y + block_height + overlap, curr_x:curr_x + block_width - overlap]
+                            crop_img = img[curr_y:curr_y + block_height, curr_x:curr_x + block_width]
                         # Левый нижний угол
                         elif count == width_cuts * (height_cuts - 1) + 1:
-                            crop_img = img[curr_y + overlap:curr_y + block_height, curr_x:curr_x + block_width - overlap]
+                            crop_img = img[curr_y + overlap:curr_y + block_height + overlap, curr_x:curr_x + block_width]
                         # Сама стенка
                         else:
-                            crop_img = img[curr_y + overlap:curr_y + block_height + overlap, curr_x:curr_x + block_width - overlap]
+                            crop_img = img[curr_y + overlap:curr_y + block_height + overlap, curr_x:curr_x + block_width]
                     # Обработка верхней границы
                     elif count <= width_cuts:
                         # Правый верхний угол
                         if count == width_cuts:
-                            crop_img = img[curr_y:curr_y + block_height - overlap, curr_x + overlap:curr_x + block_width]
+                            crop_img = img[curr_y:curr_y + block_height, curr_x + overlap:curr_x + block_width + overlap]
                         # Сама стенка
                         else:
-                            crop_img = img[curr_y:curr_y + block_height - overlap, curr_x + overlap:curr_x + block_width - overlap]
+                            crop_img = img[curr_y + overlap:curr_y + block_height + overlap, curr_x + overlap:curr_x + block_width + overlap]
                     # Обработка правой границы
                     elif count % width_cuts == 0:
                         # Правый нижний угол
                         if count == width_cuts * height_cuts:
-                            crop_img = img[curr_y + overlap:curr_y + block_height, curr_x + overlap:curr_x + block_width]
+                            crop_img = img[curr_y + overlap:curr_y + block_height + overlap, curr_x + overlap:curr_x + block_width + overlap]
                         # Сама стенка
                         else:
                             crop_img = img[curr_y + overlap:curr_y + block_height - overlap, curr_x + overlap:curr_x + block_width]
@@ -188,19 +188,19 @@ def Cycle(args: main.Args):
         os.makedirs('./Temp/Mask')
         test.ReadFramesFromVideo(args.mp4m, args.mask, './Temp/Mask')
         args.mask = './Temp/Mask'
-    # Режем видео
-    CropImages(args.video, args.tmp_vpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
-    # Режем маски
-    CropImages(args.mask, args.tmp_mpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
-    # Запускаем нейронку
-    block_width = args.width // args.w_cuts
-    block_height = args.height // args.h_cuts
-    block_height_with_overlap = block_height + args.overlap
-    block_width_with_overlap = block_width + args.overlap
-
-    test.main_worker(args)
-    CropOverlaps("./Temp/V", args.w_cuts, args.h_cuts, args.overlap, block_width, block_height)
-    GluingImages("./Temp/V", "./Temp/ResultFrame", args.w_cuts, args.h_cuts)
-    MakingVideo("./Temp/ResultFrame", args.video_out, args.fps, (args.width, args.height), args.fin_name)
+    # # Режем видео
+    # CropImages(args.video, args.tmp_vpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
+    # # Режем маски
+    # CropImages(args.mask, args.tmp_mpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
+    # # Запускаем нейронку
+    # block_width = args.width // args.w_cuts
+    # block_height = args.height // args.h_cuts
+    # block_height_with_overlap = block_height + args.overlap
+    # block_width_with_overlap = block_width + args.overlap
+    #
+    # test.main_worker(args, block_width_with_overlap, block_height_with_overlap)
+    # CropOverlaps("./Temp/result", args.w_cuts, args.h_cuts, args.overlap, block_width, block_height)
+    GluingImages("./Temp/result", "./Temp/ResultFrame", args.w_cuts, args.h_cuts)
+    MakingVideo("./Temp/ResultFrame", args.video_out, args.fps, (args.width, args.height), args.final_name)
     print("--- %s seconds ---" % (time.time() - start_time))
     return 0
