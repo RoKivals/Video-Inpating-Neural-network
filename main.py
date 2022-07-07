@@ -9,8 +9,7 @@ import design  # Это наш конвертированный файл диз�
 
 class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def __init__(self):
-        # Это здесь нужно для доступа к переменным, методам
-        # и т.д. в файле design.py
+
         super().__init__()
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
         self.pushButton_start.clicked.connect(self.func_start)
@@ -19,31 +18,31 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.pushButton_maskinput.clicked.connect(self.func_maskinput)
 
     def func_fileinput(self):
-        self.lineEdit_fileinput.clear()  # На случай, если в списке уже есть элементы
-        directory_fileinput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
-        # открыть диалог выбора директории и установить значение переменной
-        # равной пути к выбранной директории
 
-        if directory_fileinput:  # не продолжать выполнение, если пользователь не выбрал директорию
+        self.lineEdit_fileinput.clear()
+
+        if self.radioButton_frames_for_video.isChecked():
+            directory_fileinput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        else:
+            directory_fileinput = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл", filter="Video (*.mp4)")[0]
+
+        if directory_fileinput:
             print(directory_fileinput)
             self.lineEdit_fileinput.setText(directory_fileinput)
 
     def func_fileoutput(self):
-        self.lineEdit_fileoutput.clear()  # На случай, если в списке уже есть элементы
-        directory_fileoutput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
-        # открыть диалог выбора директории и установить значение переменной
-        # равной пути к выбранной директории
-
-        if directory_fileoutput:  # не продолжать выполнение, если пользователь не выбрал директорию
-            self.lineEdit_fileoutput.setText(directory_fileoutput)
+        fileoutput = QtWidgets.QFileDialog.getSaveFileName(self, "Выберите файл", filter="Video (*.mp4)")[0]
+        if fileoutput:
+            self.lineEdit_fileoutput.setText(fileoutput)
 
     def func_maskinput(self):
-        self.lineEdit_maskinput.clear()  # На случай, если в списке уже есть элементы
-        directory_maskinput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
-        # открыть диалог выбора директории и установить значение переменной
-        # равной пути к выбранной директории
+        self.lineEdit_maskinput.clear()
+        if self.radioButton_frames_for_mask.isChecked():
+            directory_maskinput = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        else:
+            directory_maskinput = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл", filter="Video (*.mp4)")[0]
 
-        if directory_maskinput:  # не продолжать выполнение, если пользователь не выбрал директорию
+        if directory_maskinput:
             self.lineEdit_maskinput.setText(directory_maskinput)
 
     def func_start(self):
@@ -59,10 +58,12 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         else:
             try:
                 self.error("")
+                video_out = "/".join(self.lineEdit_fileoutput.text().split("/")[:-1])
+                fin_name = self.lineEdit_fileoutput.text().split("/")[-1]
                 # TODO: в gui замутить считывание имени для результата и добавить его передачу в 63 строку
-                start.cycle(self.lineEdit_fileinput.text(), self.lineEdit_fileoutput.text(), self.lineEdit_maskinput.text(),
+                start.Cycle(self.lineEdit_fileinput.text(), self.lineEdit_maskinput.text(), video_out,
                             int(self.spinBox_step.text()), int(self.spinBox_neighbor.text()), int(self.spinBox_height.text()),
-                            int(self.spinBox_width.text()))
+                            int(self.spinBox_width.text()), "./Temp/V", "./Temp/V_mask", int(self.spinBox_crop_height.text()), int(self.spinBox_crop_width.text()), int(self.spinBox_crop_overlap.text()), self.radioButton_use_mp4_for_video.isChecked(), self.radioButton_use_mp4_for_mask.isChecked(), int(self.spinBox_FPS.text()), fin_name)
                 self.error("Красава ебать у тебя получилось")
             except BaseException as er:
                 text = "Error"

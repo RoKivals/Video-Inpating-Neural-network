@@ -81,10 +81,10 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
         os.makedirs(ex_path)
     img = [None] * width * height
     Horizontal = [None] * height
-    filename_frame = os.listdir(os.path.join(path_in, 'new1'))
+    filename_frame = os.listdir(os.path.join(path_in, '1'))
     for name in filename_frame:
         for i in range(width * height):
-            img[i] = cv2.imread(f"./{path_in}/new{i + 1}/" + name)
+            img[i] = cv2.imread(f"./{path_in}/{i + 1}/" + name)
         for i in range(height):
             Horizontal[i] = np.hstack(img[width * i: width * (i + 1)])
         Vertical_attachment = np.vstack(Horizontal)
