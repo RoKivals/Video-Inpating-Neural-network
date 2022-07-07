@@ -73,6 +73,34 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.label_error.setText(text)
 
 
+class Args:
+    def __init__(self):
+        self.video = None  # str
+        self.mask = None  # str
+        self.ckpt = None  # str
+        self.number = None  # int
+        self.model = None  # str
+        self.num_ref = None  # int
+        self.neighbor_stride = None  # int
+        self.ref_length = None  # int
+        self.set_size = None  # bool
+        self.width = None  # int
+        self.height = None  # int
+
+    def setup(self, video: str, mask: str, ckpt: str, number: int, model: str, num_ref: int, neighbor_stride: int,
+              ref_length: int, width: int, height: int):
+        self.video = video
+        self.mask = mask
+        self.ckpt = ckpt
+        self.number = number
+        self.model = model
+        self.num_ref = num_ref
+        self.neighbor_stride = neighbor_stride
+        self.ref_length = ref_length
+        self.width = width
+        self.height = height
+
+
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
     window = ExampleApp()  # Создаём объект класса ExampleApp
