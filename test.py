@@ -11,32 +11,7 @@ import torch
 from core.utils import to_tensors
 
 
-class Args:
-    def __init__(self):
-        self.video = None  # str
-        self.mask = None  # str
-        self.ckpt = None  # str
-        self.number = None  # int
-        self.model = None  # str
-        self.num_ref = None  # int
-        self.neighbor_stride = None  # int
-        self.ref_length = None  # int
-        self.set_size = None  # bool
-        self.width = None  # int
-        self.height = None  # int
 
-    def setup(self, video: str, mask: str, ckpt: str, number: int, model: str, num_ref: int, neighbor_stride: int,
-              ref_length: int, width: int, height: int):
-        self.video = video
-        self.mask = mask
-        self.ckpt = ckpt
-        self.number = number
-        self.model = model
-        self.num_ref = num_ref
-        self.neighbor_stride = neighbor_stride
-        self.ref_length = ref_length
-        self.width = width
-        self.height = height
 
 
 # Сохранение кадров после обработки с помощью нейронной сети
@@ -119,9 +94,7 @@ def resize_frames(frames, size=None):
 '''
 
 
-def main_worker(frames_in, mask, ckpt, number, model, neighbor_stride, ref_length, width, height):
-    args = Args()
-    args.setup(frames_in, mask, ckpt, number, model, -1, neighbor_stride, ref_length, width, height)
+def main_worker(args):
     root_video = args.video
     root_mask = args.mask
     for iteration in range(1, args.number + 1):
