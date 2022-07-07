@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 import time
 import test
-
+import main
 
 def CropImages(path_in: str, path_out: str, width_cuts: int, height_cuts: int, overlap: int, width: int, height: int):
     if path_in[-1] != "/":
@@ -174,35 +174,33 @@ def CropOverlaps(path, width_cuts: int, height_cuts: int, overlap:int, width: in
 
 
 # Цикл пропускающий все картинки через нейронку
-def Cycle(file_in: str, mask_in: str, video_out: str, step, neighbor, height, width, tmp_vpath: str, tmp_mpath: str, h_cuts: int, w_cuts: int,
-          overlap: int, mp4v: bool, mp4m: bool, fps: int, fin_name: str):
+def Cycle(args: main.Args):
     start_time = time.time()
-    if not os.path.exists(tmp_vpath):
-        os.makedirs(tmp_vpath)
-    if not os.path.exists(tmp_mpath):
-        os.makedirs(tmp_mpath)
-    if mp4v:
+    if not os.path.exists(args.tmp_vpath):
+        os.makedirs(args.tmp_vpath)
+    if not os.path.exists(args.tmp_mpath):
+        os.makedirs(args.tmp_mpath)
+    if args.mp4v:
         os.makedirs('./Temp/Frames')
-        test.ReadFramesFromVideo(mp4v, file_in, './Temp/Frames')
-        file_in = './Temp/Frames'
-    if mp4m:
+        test.ReadFramesFromVideo(args.mp4v, args.video, './Temp/Frames')
+        args.video = './Temp/Frames'
+    if args.mp4m:
         os.makedirs('./Temp/Mask')
-        test.ReadFramesFromVideo(mp4m, mask_in, './Temp/Mask')
-        mask_in = './Temp/Mask'
+        test.ReadFramesFromVideo(args.mp4m, args.mask, './Temp/Mask')
+        args.mask = './Temp/Mask'
     # Режем видео
-    CropImages(file_in, tmp_vpath, w_cuts, h_cuts, overlap, width, height)
+    CropImages(args.video, args.tmp_vpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
     # Режем маски
-    CropImages(mask_in, tmp_mpath, w_cuts, h_cuts, overlap, width, height)
+    CropImages(args.mask, args.tmp_mpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
     # Запускаем нейронку
+    block_width = args.width // args.w_cuts
+    block_height = args.height // args.h_cuts
+    block_height_with_overlap = block_height + args.overlap
+    block_width_with_overlap = block_width + args.overlap
 
-    block_width = width // w_cuts
-    block_height = height // h_cuts
-    block_height_with_overlap = block_height + overlap
-    block_width_with_overlap = block_width + overlap
-
-    test.main_worker(tmp_vpath, tmp_mpath, "release_model/E2FGVI-HQ-CVPR22.pth", w_cuts * h_cuts, "e2fgvi_hq", neighbor, step, block_width_with_overlap, block_height_with_overlap)
-    CropOverlaps("./Temp/V", w_cuts, h_cuts, overlap, block_width, block_height)
-    GluingImages("./Temp/V", "./Temp/ResultFrame", w_cuts, h_cuts)
-    MakingVideo("./Temp/ResultFrame", video_out, fps, (width, height), fin_name)
+    test.main_worker(args)
+    CropOverlaps("./Temp/V", args.w_cuts, args.h_cuts, args.overlap, block_width, block_height)
+    GluingImages("./Temp/V", "./Temp/ResultFrame", args.w_cuts, args.h_cuts)
+    MakingVideo("./Temp/ResultFrame", args.video_out, args.fps, (args.width, args.height), args.fin_name)
     print("--- %s seconds ---" % (time.time() - start_time))
     return 0

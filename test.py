@@ -124,7 +124,6 @@ def main_worker(args):
         imgs, masks = imgs.to(device), masks.to(device)
         comp_frames = [None] * video_length
         # completing holes by e2fgvi
-
         for f in tqdm(range(0, video_length, args.neighbor_stride)):
             neighbor_ids = [i for i in range(max(0, f - args.neighbor_stride), min(video_length, f + args.neighbor_stride + 1))]
             ref_ids = get_ref_index(f, neighbor_ids, video_length, args)

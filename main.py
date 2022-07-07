@@ -63,8 +63,10 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 # TODO: в gui замутить считывание имени для результата и добавить его передачу в 63 строку
                 args = Args()
                 args.setup(self.lineEdit_fileinput.text(), self.lineEdit_maskinput.text(), video_out,
-                            int(self.spinBox_step.text()), int(self.spinBox_neighbor.text()), int(self.spinBox_height.text()),
-                            int(self.spinBox_width.text()), "./Temp/V", "./Temp/V_mask", int(self.spinBox_crop_height.text()), int(self.spinBox_crop_width.text()), int(self.spinBox_crop_overlap.text()), self.radioButton_use_mp4_for_video.isChecked(), self.radioButton_use_mp4_for_mask.isChecked(), int(self.spinBox_FPS.text()), fin_name)
+                           int(self.spinBox_step.text()), int(self.spinBox_neighbor.text()), int(self.spinBox_height.text()),
+                           int(self.spinBox_width.text()), int(self.spinBox_crop_height.text()), int(self.spinBox_crop_width.text()),
+                           int(self.spinBox_crop_overlap.text()), self.radioButton_use_mp4_for_video.isChecked(),
+                           self.radioButton_use_mp4_for_mask.isChecked(), int(self.spinBox_FPS.text()), fin_name)
                 start.Cycle(args)
                 self.error("Красава ебать у тебя получилось")
             except BaseException as er:
@@ -79,28 +81,43 @@ class Args:
     def __init__(self):
         self.video = None  # str
         self.mask = None  # str
-        self.ckpt = None  # str
-        self.number = None  # int
-        self.model = None  # str
-        self.num_ref = None  # int
+        self.ckpt = "release_model/E2FGVI-HQ-CVPR22.pth"  # str
+        self.step = None
+        self.video_out = None
         self.neighbor_stride = None  # int
-        self.ref_length = None  # int
-        self.set_size = None  # bool
         self.width = None  # int
         self.height = None  # int
+        self.tmp_vpath = "./Temp/V"
+        self.tmp_mpath = "./Temp/V_mask"
+        self.h_cuts = None
+        self.w_cuts = None
+        self.overlap = None
+        self.number = None  # int
+        self.model = "e2fgvi_hq"  # str
+        self.num_ref = -1  # int
+        self.mp4v = None
+        self.mp4m = None
+        self.fps = None
+        self.final_name = None
+        self.set_size = None  # bool
 
-    def setup(self, video: str, mask: str, ckpt: str, number: int, model: str, num_ref: int, neighbor_stride: int,
-              ref_length: int, width: int, height: int):
+    def setup(self, video: str, mask: str, video_out: str, step: int, neighbor_stride: int, height: int, width: int, h_cuts: int, w_cuts: int,
+              overlap: int, mp4v: bool, mp4m: bool, fps: int, fin_name: str):
         self.video = video
         self.mask = mask
-        self.ckpt = ckpt
-        self.number = number
-        self.model = model
-        self.num_ref = num_ref
+        self.video_out = video_out
+        self.step = step
         self.neighbor_stride = neighbor_stride
-        self.ref_length = ref_length
-        self.width = width
         self.height = height
+        self.width = width
+        self.h_cuts = h_cuts
+        self.w_cuts = w_cuts
+        self.overlap = overlap
+        self.mp4v = mp4v
+        self.mp4m = mp4m
+        self.fps = fps
+        self.final_name = fin_name
+        self.number = w_cuts * h_cuts
 
 
 def main():
