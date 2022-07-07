@@ -44,10 +44,10 @@ def saving_frames(comp_frames, namedir, args):
     res_dir = os.path.join("./Temp/result/", namedir)
     if not os.path.exists(res_dir):
         os.makedirs(res_dir)
-    filenames = os.listdir(args.frame_in)
+    filenames = os.listdir(args.video)
     for i in range(len(comp_frames)):
         comp = comp_frames[i]
-        cv2.imwrite(res_dir + filenames[i], cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
+        cv2.imwrite(os.path.join(res_dir, filenames[i]), cv2.cvtColor(comp, cv2.COLOR_BGR2RGB))
 
 
 # sample reference frames from the whole video
@@ -177,4 +177,4 @@ def main_worker(frames_in, mask, ckpt, number, model, neighbor_stride, ref_lengt
                         comp_frames[idx] = img
                     else:
                         comp_frames[idx] = comp_frames[idx].astype(np.float32) * 0.5 + img.astype(np.float32) * 0.5
-        saving_frames(comp_frames, str(iteration))
+        saving_frames(comp_frames, str(iteration), args)
