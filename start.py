@@ -170,7 +170,7 @@ def CropOverlaps(path, width_cuts: int, height_cuts: int, overlap:int, width: in
 
 
 # Цикл пропускающий все картинки через нейронку
-def Cycle(args: main.Args):
+def Cycle(args: main.Args, app):
     start_time = time.time()
     if not os.path.exists(args.tmp_vpath):
         os.makedirs(args.tmp_vpath)
@@ -186,17 +186,23 @@ def Cycle(args: main.Args):
         args.mask = './Temp/Mask'
     # # Режем видео
     CropImages(args.video, args.tmp_vpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
+    app.progressBar.setValue(5)
     # Режем маски
     CropImages(args.mask, args.tmp_mpath, args.w_cuts, args.h_cuts, args.overlap, args.width, args.height)
+    app.progressBar.setValue(10)
     # Запускаем нейронку
     block_width = args.width // args.w_cuts
     block_height = args.height // args.h_cuts
     block_height_with_overlap = block_height + args.overlap
     block_width_with_overlap = block_width + args.overlap
 
-    test.main_worker(args, block_width_with_overlap, block_height_with_overlap)
+    test.main_worker(args, block_width_with_overlap, block_height_with_overlap, app)
+    app.progressBar.setValue(70)
     CropOverlaps("./Temp/result", args.w_cuts, args.h_cuts, args.overlap, block_width, block_height)
+    app.progressBar.setValue(80)
     GluingImages("./Temp/result", "./Temp/ResultFrame", args.w_cuts, args.h_cuts)
+    app.progressBar.setValue(90)
     MakingVideo("./Temp/ResultFrame", args.video_out, args.fps, (args.width, args.height), args.final_name)
+    app.progressBar.setValue(100)
     print("--- %s seconds ---" % (time.time() - start_time))
     return 0

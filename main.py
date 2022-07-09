@@ -3,7 +3,6 @@ import os  # Отсюда нам понадобятся методы для от
 
 import start
 from PyQt5 import QtWidgets
-
 import design  # Это наш конвертированный файл дизайна
 
 
@@ -68,7 +67,7 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                            int(self.spinBox_width.text()), int(self.spinBox_crop_height.text()), int(self.spinBox_crop_width.text()),
                            int(self.spinBox_crop_overlap.text()), self.radioButton_use_mp4_for_video.isChecked(),
                            self.radioButton_use_mp4_for_mask.isChecked(), int(self.spinBox_FPS.text()), fin_name)
-                start.Cycle(args)
+                start.Cycle(args, self)
                 self.error("Красава ебать у тебя получилось")
             except BaseException as er:
                 text = "Error"
@@ -123,9 +122,8 @@ class Args:
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
-    app.setStyle('Breeze')
-    window = ExampleApp()  # Создаём объект класса ExampleApp
-    window.show()  # Показываем окно
+    window = ExampleApp()# Создаём объект класса ExampleApp # Показываем окно
+    window.show()
     app.exec_()  # и запускаем приложение
 
 

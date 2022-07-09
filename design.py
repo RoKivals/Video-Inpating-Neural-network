@@ -278,4 +278,4 @@ class Ui_MainWindow(object):
         self.radioButton_use_mp4_for_mask.setText(_translate("MainWindow", "MP4"))
         self.radioButton_frames_for_mask.setText(_translate("MainWindow", "Покадрово"))
         self.label_step_2.setText(_translate("MainWindow", "FPS"))
-        self.pushButton_start.setText(_translate("MainWindow", "PushButton"))
+        self.pushButton_start.setText(_translate("MainWindow", "Старт"))

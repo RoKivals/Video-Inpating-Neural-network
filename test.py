@@ -95,7 +95,7 @@ def resize_frames(frames, size=None):
 '''
 
 
-def main_worker(args, width, height):
+def main_worker(args, width, height, app):
     root_video = args.tmp_vpath
     root_mask = args.tmp_mpath
     for iteration in range(1, args.number + 1):
@@ -150,3 +150,4 @@ def main_worker(args, width, height):
                     else:
                         comp_frames[idx] = comp_frames[idx].astype(np.float32) * 0.5 + img.astype(np.float32) * 0.5
         saving_frames(comp_frames, str(iteration), args)
+        app.progressBar.setValue(app.progressBar.value() + 60 // args.number)
