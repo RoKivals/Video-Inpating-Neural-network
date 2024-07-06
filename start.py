@@ -96,10 +96,10 @@ def GluingImages(path_in: str, ex_path: str, width: int, height: int):
 # создание видео из готовых кадров
 def MakingVideo(path: str, path_out: str, fps: int, size: tuple, save_name: str):
     lst = os.listdir(path)  # Путь, где лежат готовые фреймы
-    lst.sort()  # Собираем названия всех фреймов по порядку
+    lst = sorted(lst, key=lambda x: int(x[0:-4]))  # Собираем названия всех фреймов по порядку
     # TODO: Можно попробовать выставить эти кадры по времени создания, а не по имени (в теории это более надёжно)
     frames = []
-    for fr in [os.path.join(path, name) for name in lst]:
+    for fr in [path + '/' + name for name in lst]:
         image = cv2.imread(fr)
         image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         frames.append(image)
